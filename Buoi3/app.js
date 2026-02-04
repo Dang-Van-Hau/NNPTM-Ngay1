@@ -6,6 +6,7 @@ const paginationEl = document.getElementById('pagination');
 const paginationInfo = document.getElementById('paginationInfo');
 const sortTitleEl = document.getElementById('sortTitle');
 const sortPriceEl = document.getElementById('sortPrice');
+const btnExportCsv = document.getElementById('btnExportCsv');
 
 let allProducts = [];
 let filteredProducts = [];
@@ -122,6 +123,28 @@ function filterByTitle() {
   render();
 }
 
+function exportCurrentViewToCsv() {
+  const pageData = getPageData();
+  if (pageData.length === 0) {
+    alert('Không có dữ liệu để export.');
+    return;
+  }
+  const headers = ['id', 'title', 'price', 'category', 'images', 'description'];
+  const rows = pageData.map(p => {
+    const cat = p.category ? p.category.name : '';
+    const imgs = Array.isArray(p.images) ? p.images.join('; ') : (p.images || '');
+    const desc = (p.description || '').replace(/"/g, '""');
+    return [p.id, `"${(p.title || '').replace(/"/g, '""')}"`, p.price, `"${cat.replace(/"/g, '""')}"`, `"${imgs}"`, `"${desc}"`];
+  });
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `products_page${currentPage}_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
 (async () => {
   try {
     allProducts = await fetchProducts();
@@ -143,6 +166,7 @@ function filterByTitle() {
       sortPriceOrder = sortPriceOrder === 'none' ? 'asc' : sortPriceOrder === 'asc' ? 'desc' : 'none';
       filterByTitle();
     });
+    btnExportCsv.addEventListener('click', exportCurrentViewToCsv);
   } catch (e) {
     tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-danger">Lỗi: ${e.message}</td></tr>`;
   }
