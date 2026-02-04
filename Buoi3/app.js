@@ -1,5 +1,8 @@
 const API_BASE = 'https://api.escuelajs.co/api/v1';
 const tbody = document.getElementById('tbody');
+const searchTitle = document.getElementById('searchTitle');
+
+let allProducts = [];
 
 async function fetchProducts() {
   const res = await fetch(`${API_BASE}/products`);
@@ -38,10 +41,20 @@ function renderTable(products) {
   }).join('');
 }
 
+function filterByTitle() {
+  const q = (searchTitle.value || '').trim().toLowerCase();
+  const list = q
+    ? allProducts.filter(p => (p.title || '').toLowerCase().includes(q))
+    : [...allProducts];
+  renderTable(list);
+}
+
 (async () => {
   try {
-    const products = await fetchProducts();
-    renderTable(products);
+    allProducts = await fetchProducts();
+    filterByTitle();
+    searchTitle.addEventListener('input', filterByTitle);
+    searchTitle.addEventListener('change', filterByTitle);
   } catch (e) {
     tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-danger">Lỗi: ${e.message}</td></tr>`;
   }
