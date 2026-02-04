@@ -4,11 +4,15 @@ const searchTitle = document.getElementById('searchTitle');
 const perPageSelect = document.getElementById('perPage');
 const paginationEl = document.getElementById('pagination');
 const paginationInfo = document.getElementById('paginationInfo');
+const sortTitleEl = document.getElementById('sortTitle');
+const sortPriceEl = document.getElementById('sortPrice');
 
 let allProducts = [];
 let filteredProducts = [];
 let currentPage = 1;
 let perPage = 10;
+let sortTitleOrder = 'none';
+let sortPriceOrder = 'none';
 
 async function fetchProducts() {
   const res = await fetch(`${API_BASE}/products`);
@@ -45,6 +49,24 @@ function renderTable(products) {
       </tr>
     `;
   }).join('');
+}
+
+function applySort(data) {
+  const list = [...data];
+  if (sortTitleOrder === 'asc') list.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+  if (sortTitleOrder === 'desc') list.sort((a, b) => (b.title || '').localeCompare(a.title || ''));
+  if (sortPriceOrder === 'asc') list.sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
+  if (sortPriceOrder === 'desc') list.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
+  return list;
+}
+
+function updateSortIcons() {
+  sortTitleEl.classList.remove('bi-arrow-down', 'bi-arrow-up', 'bi-arrow-down-up', 'active');
+  sortPriceEl.classList.remove('bi-arrow-down', 'bi-arrow-up', 'bi-arrow-down-up', 'active');
+  sortTitleEl.classList.add(sortTitleOrder === 'asc' ? 'bi-arrow-up' : sortTitleOrder === 'desc' ? 'bi-arrow-down' : 'bi-arrow-down-up');
+  sortPriceEl.classList.add(sortPriceOrder === 'asc' ? 'bi-arrow-up' : sortPriceOrder === 'desc' ? 'bi-arrow-down' : 'bi-arrow-down-up');
+  if (sortTitleOrder !== 'none') sortTitleEl.classList.add('active');
+  if (sortPriceOrder !== 'none') sortPriceEl.classList.add('active');
 }
 
 function getPageData() {
@@ -87,13 +109,15 @@ function renderPagination() {
 function render() {
   renderTable(getPageData());
   renderPagination();
+  updateSortIcons();
 }
 
 function filterByTitle() {
   const q = (searchTitle.value || '').trim().toLowerCase();
-  filteredProducts = q
+  const list = q
     ? allProducts.filter(p => (p.title || '').toLowerCase().includes(q))
     : [...allProducts];
+  filteredProducts = applySort(list);
   currentPage = 1;
   render();
 }
@@ -108,6 +132,16 @@ function filterByTitle() {
       perPage = parseInt(perPageSelect.value, 10);
       currentPage = 1;
       render();
+    });
+    sortTitleEl.addEventListener('click', () => {
+      sortPriceOrder = 'none';
+      sortTitleOrder = sortTitleOrder === 'none' ? 'asc' : sortTitleOrder === 'asc' ? 'desc' : 'none';
+      filterByTitle();
+    });
+    sortPriceEl.addEventListener('click', () => {
+      sortTitleOrder = 'none';
+      sortPriceOrder = sortPriceOrder === 'none' ? 'asc' : sortPriceOrder === 'asc' ? 'desc' : 'none';
+      filterByTitle();
     });
   } catch (e) {
     tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-danger">Lỗi: ${e.message}</td></tr>`;
