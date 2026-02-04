@@ -20,15 +20,16 @@ function renderTable(products) {
     return;
   }
   tbody.innerHTML = products.map(p => {
+    const desc = (p.description || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const categoryName = p.category ? p.category.name : '—';
     const imgs = Array.isArray(p.images) ? p.images : (p.images ? [p.images] : []);
     const imagesHtml = imgs.slice(0, 3).map(url =>
       `<img src="${url}" alt="" class="thumb-img me-1" onerror="this.src='https://placehold.co/48x48?text=Err'">`
     ).join('');
     return `
-      <tr>
+      <tr class="tooltip-desc">
         <td>${p.id}</td>
-        <td>${escapeHtml(p.title || '')}</td>
+        <td>${escapeHtml(p.title || '')}<span class="tooltip-desc-text">${desc || 'Không có mô tả'}</span></td>
         <td>${typeof p.price === 'number' ? p.price.toLocaleString() : p.price}</td>
         <td>${escapeHtml(categoryName)}</td>
         <td>${imagesHtml || '—'}</td>
