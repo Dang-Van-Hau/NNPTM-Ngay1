@@ -29,6 +29,8 @@
     .tooltip-desc:hover .tooltip-desc-text { visibility: visible; }
     .sort-icon { cursor: pointer; opacity: 0.7; }
     .sort-icon:hover, .sort-icon.active { opacity: 1; }
+    .table-row-click { cursor: pointer; }
+    .table-row-click:hover { background-color: rgba(13, 110, 253, 0.08); }
   </style>
 </head>
 <body class="bg-light">
@@ -76,6 +78,55 @@
           <div class="text-muted small" id="paginationInfo">—</div>
           <ul class="pagination mb-0" id="pagination"></ul>
         </nav>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Chi tiết / Edit -->
+  <div class="modal fade" id="modalDetail" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Chi tiết sản phẩm</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-4 text-center">
+              <img id="detailImage" src="" alt="" class="img-fluid rounded" style="max-height: 200px;">
+            </div>
+            <div class="col-md-8">
+              <p><strong>ID:</strong> <span id="detailId"></span></p>
+              <p><strong>Title:</strong> <span id="detailTitle"></span></p>
+              <p><strong>Price:</strong> <span id="detailPrice"></span></p>
+              <p><strong>Category:</strong> <span id="detailCategory"></span></p>
+              <p><strong>Description:</strong> <span id="detailDescription"></span></p>
+            </div>
+          </div>
+          <hr>
+          <div id="detailEditForm" class="d-none">
+            <h6>Chỉnh sửa</h6>
+            <input type="hidden" id="editId">
+            <div class="mb-2">
+              <label class="form-label">Title</label>
+              <input type="text" class="form-control" id="editTitle">
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Price</label>
+              <input type="number" class="form-control" id="editPrice" step="0.01">
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Description</label>
+              <textarea class="form-control" id="editDescription" rows="2"></textarea>
+            </div>
+            <button type="button" class="btn btn-primary btn-sm" id="btnSaveEdit">Lưu thay đổi</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="btnCancelEdit">Hủy</button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+          <button type="button" class="btn btn-primary" id="btnEdit">Chỉnh sửa</button>
+        </div>
       </div>
     </div>
   </div>

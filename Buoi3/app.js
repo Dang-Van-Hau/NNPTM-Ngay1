@@ -7,6 +7,7 @@ const paginationInfo = document.getElementById('paginationInfo');
 const sortTitleEl = document.getElementById('sortTitle');
 const sortPriceEl = document.getElementById('sortPrice');
 const btnExportCsv = document.getElementById('btnExportCsv');
+const modalDetail = new bootstrap.Modal(document.getElementById('modalDetail'));
 
 let allProducts = [];
 let filteredProducts = [];
@@ -41,7 +42,7 @@ function renderTable(products) {
       `<img src="${url}" alt="" class="thumb-img me-1" onerror="this.src='https://placehold.co/48x48?text=Err'">`
     ).join('');
     return `
-      <tr class="tooltip-desc">
+      <tr class="tooltip-desc table-row-click" data-id="${p.id}" title="Click để xem chi tiết">
         <td>${p.id}</td>
         <td>${escapeHtml(p.title || '')}<span class="tooltip-desc-text">${desc || 'Không có mô tả'}</span></td>
         <td>${typeof p.price === 'number' ? p.price.toLocaleString() : p.price}</td>
@@ -50,6 +51,59 @@ function renderTable(products) {
       </tr>
     `;
   }).join('');
+
+  tbody.querySelectorAll('.table-row-click').forEach(tr => {
+    tr.addEventListener('click', () => openDetail(Number(tr.dataset.id)));
+  });
+}
+
+function openDetail(id) {
+  const p = allProducts.find(x => x.id === id) || filteredProducts.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('detailId').textContent = p.id;
+  document.getElementById('detailTitle').textContent = p.title || '—';
+  document.getElementById('detailPrice').textContent = typeof p.price === 'number' ? p.price.toLocaleString() : p.price;
+  document.getElementById('detailCategory').textContent = p.category ? p.category.name : '—';
+  document.getElementById('detailDescription').textContent = p.description || '—';
+  const imgs = Array.isArray(p.images) ? p.images : (p.images ? [p.images] : []);
+  document.getElementById('detailImage').src = imgs[0] || 'https://placehold.co/400x200?text=No+image';
+  document.getElementById('detailImage').alt = p.title || '';
+
+  document.getElementById('editId').value = p.id;
+  document.getElementById('editTitle').value = p.title || '';
+  document.getElementById('editPrice').value = p.price ?? '';
+  document.getElementById('editDescription').value = p.description || '';
+  document.getElementById('detailEditForm').classList.add('d-none');
+  document.getElementById('btnEdit').classList.remove('d-none');
+  modalDetail.show();
+}
+
+async function saveEdit() {
+  const id = document.getElementById('editId').value;
+  const title = document.getElementById('editTitle').value.trim();
+  const price = parseFloat(document.getElementById('editPrice').value);
+  const description = document.getElementById('editDescription').value.trim();
+  if (!title || isNaN(price)) {
+    alert('Title và Price không hợp lệ.');
+    return;
+  }
+  try {
+    const res = await fetch(`${API_BASE}/products/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, price, description })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const updated = await res.json();
+    const idx = allProducts.findIndex(x => x.id === parseInt(id, 10));
+    if (idx !== -1) allProducts[idx] = { ...allProducts[idx], ...updated };
+    filterByTitle();
+    document.getElementById('detailEditForm').classList.add('d-none');
+    document.getElementById('btnEdit').classList.remove('d-none');
+    modalDetail.hide();
+  } catch (e) {
+    alert('Cập nhật thất bại: ' + e.message);
+  }
 }
 
 function applySort(data) {
@@ -167,6 +221,15 @@ function exportCurrentViewToCsv() {
       filterByTitle();
     });
     btnExportCsv.addEventListener('click', exportCurrentViewToCsv);
+    document.getElementById('btnEdit').addEventListener('click', () => {
+      document.getElementById('detailEditForm').classList.remove('d-none');
+      document.getElementById('btnEdit').classList.add('d-none');
+    });
+    document.getElementById('btnSaveEdit').addEventListener('click', saveEdit);
+    document.getElementById('btnCancelEdit').addEventListener('click', () => {
+      document.getElementById('detailEditForm').classList.add('d-none');
+      document.getElementById('btnEdit').classList.remove('d-none');
+    });
   } catch (e) {
     tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-danger">Lỗi: ${e.message}</td></tr>`;
   }
